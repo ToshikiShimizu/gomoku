@@ -23,6 +23,7 @@ class Game:
                 self.sub_p.win()
                 break
             self.move(position,self.main_p.color)
+            self.judge(self.board.state,position)
             #if i % 10 == 0:
             #self.board.print_state()
             self.switch_p()
@@ -34,6 +35,17 @@ class Game:
 
     def is_legal_move(self,position):
         return self.board.state[position[0], position[1]] == 0
+    def judge(self,state,position):
+        #print (state[position[0],position[1]])
+        big_board = np.zeros((N+2*(K-1),N+2*(K-1)))
+        #print (position)
+        big_position = np.array(position) + K - 1
+        print (big_position)
+        big_board[K-1:N+K-1,K-1:N+K-1] = state
+
+        ls = [[0,1],[0,-1],[1,0],[1,1]]
+        for a,b in ls:
+            print (a,b)
 
 class Board:
     def __init__(self):
@@ -88,7 +100,7 @@ class LegalPlayer(Player):
         prob = (state==0).astype(np.int)
         s = prob.sum()
         prob = (prob / s).flatten()
-        idx = np.random.choice(len(prob),1,p=prob)
+        idx = np.random.choice(len(prob),1,p=prob)[0]
         position = [idx//N, idx%N]
         return position#座標のリストを返却
 
@@ -109,9 +121,10 @@ class HumanPlayer(Player):
         print (self.name,"draw")
 if __name__=="__main__":
     N = 19
+    K = 5
     p1 = LegalPlayer("l1")
-    #p2 = LegalPlayer("l2")
-    p2 = RandomPlayer("r2")
+    p2 = LegalPlayer("l2")
+    #p2 = RandomPlayer("r2")
     #p2 = HumanPlayer("h2")
     for i in range(1):
         game = Game(p1,p2)
