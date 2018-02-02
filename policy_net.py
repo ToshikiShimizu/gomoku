@@ -28,6 +28,7 @@ class CNN(chainer.Chain):
             self.l3 = L.Linear(None, n_out,initialW = initializer)  # n_units -> n_units
     def __call__(self, x, mask, t):
         x = x.reshape(-1,self.n_channel,self.SIZE,self.SIZE)
+        mask = mask.reshape(-1,self.SIZE**2)
         h1 = F.relu(self.l1(x))
         #print (h1.shape)
         h2 = F.relu(self.l2(h1))
@@ -41,6 +42,7 @@ class CNN(chainer.Chain):
 
     def predict(self, x, mask):
         x = x.reshape(-1,self.n_channel,self.SIZE,self.SIZE)
+        mask = mask.reshape(-1,self.SIZE**2)
 
         h1 = F.relu(self.l1(x))
         h2 = F.relu(self.l2(h1))

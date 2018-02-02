@@ -88,13 +88,18 @@ class Player:
         """
         moveは座標をリストで表現し、返却する
         """
+    def end_process(self,result):
+        pass
     def win(self):
         self.n_win += 1
         print (self.name,"win",self.n_win)
+        self.end_process(1)
     def lose(self):
         self.n_lose += 1
+        self.end_process(-1)
     def draw(self):
         self.n_draw += 1
+        self.end_process(0)
 class RandomPlayer(Player):
     def __init__(self,name):
         super().__init__(name)
@@ -124,6 +129,10 @@ class PolicyGradientPlayer(Player):
         self.optimizer = optimizers.Adam(alpha=1e-4)#best
         self.optimizer.setup(self.policy_net)
         self.optimizer.add_hook(chainer.optimizer.WeightDecay(1e-4))
+        self.history_idx = []
+        self.history_x = []
+        self.history_mask = []
+        self.history_result = []
 
     def move(self,board):
         state = board.state
@@ -132,7 +141,30 @@ class PolicyGradientPlayer(Player):
         prob = self.policy_net.predict(x, mask).data.flatten()
         idx = np.random.choice(len(prob),1,p=prob)[0]
         position = [idx//N, idx%N]
+        self.history_x.append(x)
+        self.history_mask.append(mask)
+        self.history_idx.append(idx)
+
         return position#座標のリストを返却
+    def end_process(self,result):#historyの初期化
+        self.history_result.extend([result for i in range(len(self.history_x))])
+        self.update()
+        self.history_x = []
+        self.history_idx = []
+        self.history_mask = []
+        self.history_result = []
+
+    def update(self):
+        x = np.array(self.history_x)
+        mask = np.array(self.history_mask)
+        result = np.array(self.history_result)
+        target = np.array(self.history_idx).astype(np.int32)
+
+        loss = self.policy_net(x, mask, target)
+        loss = F.mean(loss*result)
+        loss.backward()
+        self.optimizer.update
+
 
 
 class HumanPlayer(Player):
@@ -156,12 +188,13 @@ if __name__=="__main__":
     K = 5
     p1 = LegalPlayer("l1")
     #p1 = RandomPlayer("r1")
+    #p1 = PolicyGradientPlayer("p1")
 
-    p2 = PolicyGradientPlayer("p2")
-    #p2 = LegalPlayer("l2")
+    #p2 = PolicyGradientPlayer("p2")
+    p2 = LegalPlayer("l2")
     #p2 = RandomPlayer("r2")
     #p2 = HumanPlayer("h2")
-    for i in range(100):
+    for i in range(10000):
         game = Game(p1,p2)
         game.ready()
         game.play()
