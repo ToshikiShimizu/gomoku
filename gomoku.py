@@ -1,5 +1,12 @@
 import numpy as np
 from scipy import signal
+import chainer
+from chainer import functions as F
+from chainer import links as L
+from chainer import Variable
+from chainer import optimizers
+from chainer import cuda
+from policy_net import CNN
 class Game:
     def __init__(self,p1,p2):
         self.p1 = p1
@@ -107,6 +114,27 @@ class LegalPlayer(Player):
         position = [idx//N, idx%N]
         return position#座標のリストを返却
 
+class PolicyGradientPlayer(Player):
+    def __init__(self,name):
+        super().__init__(name)
+        n_channel = 2
+        n_out = N**2
+        n_size = N
+        self.policy_net = CNN(n_channel, n_out, n_size)
+        self.optimizer = optimizers.Adam(alpha=1e-4)#best
+        self.optimizer.setup(self.policy_net)
+        self.optimizer.add_hook(chainer.optimizer.WeightDecay(1e-4))
+
+    def move(self,board):
+        state = board.state
+        x = np.array([state == 1,state == -1]).astype(np.float32)#2チャネルに変換
+        mask = (state==0).astype(np.float32).reshape(1,-1)#合法手マスク
+        prob = self.policy_net.predict(x, mask).data.flatten()
+        idx = np.random.choice(len(prob),1,p=prob)[0]
+        position = [idx//N, idx%N]
+        return position#座標のリストを返却
+
+
 class HumanPlayer(Player):
     def __init__(self,name):
         super().__init__(name)
@@ -127,10 +155,13 @@ if __name__=="__main__":
     N = 19
     K = 5
     p1 = LegalPlayer("l1")
-    p2 = LegalPlayer("l2")
+    #p1 = RandomPlayer("r1")
+
+    p2 = PolicyGradientPlayer("p2")
+    #p2 = LegalPlayer("l2")
     #p2 = RandomPlayer("r2")
     #p2 = HumanPlayer("h2")
-    for i in range(1000):
+    for i in range(100):
         game = Game(p1,p2)
         game.ready()
         game.play()
