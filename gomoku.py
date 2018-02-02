@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import signal
 class Game:
     def __init__(self,p1,p2):
         self.p1 = p1
@@ -17,16 +18,19 @@ class Game:
         self.main_p = p1
         self.sub_p = p2
         for i in range(N*N):
-            position = self.main_p.move(self.board.state)
+            position = self.main_p.move(self.board)
             if self.is_legal_move(position) == False:
                 self.main_p.lose()
                 self.sub_p.win()
                 break
             self.move(position,self.main_p.color)
-            self.judge(self.board.state,position)
-            #if i % 10 == 0:
-            #self.board.print_state()
+            if self.judge(self.board.state,position):
+                self.main_p.win()
+                self.sub_p.lose()
+                #self.board.print_state()
+                break
             self.switch_p()
+            #self.board.print_state()
         else:
             self.main_p.draw()
             self.sub_p.draw()
@@ -36,16 +40,14 @@ class Game:
     def is_legal_move(self,position):
         return self.board.state[position[0], position[1]] == 0
     def judge(self,state,position):
-        #print (state[position[0],position[1]])
-        big_board = np.zeros((N+2*(K-1),N+2*(K-1)))
-        #print (position)
-        big_position = np.array(position) + K - 1
-        print (big_position)
-        big_board[K-1:N+K-1,K-1:N+K-1] = state
+        filters = np.ones((1,K)),np.ones((K,1)),np.identity(K),np.identity(K)[::-1]
+        for fil in filters:
+            temp = signal.convolve2d(state,fil,mode="valid")#判定に必要な分だけ(valid)取得。その方が速い
+            if(abs(temp).max()==K):
 
-        ls = [[0,1],[0,-1],[1,0],[1,1]]
-        for a,b in ls:
-            print (a,b)
+                return True
+        return False
+
 
 class Board:
     def __init__(self):
@@ -74,7 +76,7 @@ class Player:
         self.n_win = 0
         self.n_lose = 0
         self.n_draw = 0
-    def move(self,state):
+    def move(self,board):
         pass
         """
         moveは座標をリストで表現し、返却する
@@ -89,14 +91,15 @@ class Player:
 class RandomPlayer(Player):
     def __init__(self,name):
         super().__init__(name)
-    def move(self,state):
-        position = np.random.randint(0,state.shape[0],(2))
+    def move(self,board):
+        position = np.random.randint(0,board.state.shape[0],(2))
         return position#座標のリストを返却
 
 class LegalPlayer(Player):
     def __init__(self,name):
         super().__init__(name)
-    def move(self,state):
+    def move(self,board):
+        state = board.state
         prob = (state==0).astype(np.int)
         s = prob.sum()
         prob = (prob / s).flatten()
@@ -107,7 +110,8 @@ class LegalPlayer(Player):
 class HumanPlayer(Player):
     def __init__(self,name):
         super().__init__(name)
-    def move(self,state):
+    def move(self,board):
+        board.print_state()
         #position = np.random.randint(0,N,(2))
         idx2 = ord(input("col(alphabet):"))-97
         idx1 = int(input("row(number):"))-1
@@ -126,7 +130,7 @@ if __name__=="__main__":
     p2 = LegalPlayer("l2")
     #p2 = RandomPlayer("r2")
     #p2 = HumanPlayer("h2")
-    for i in range(1):
+    for i in range(1000):
         game = Game(p1,p2)
         game.ready()
         game.play()
