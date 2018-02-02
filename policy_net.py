@@ -16,13 +16,13 @@ class CNN(chainer.Chain):
     def __init__(self, n_channel, n_out, SIZE,initializer=None):
         super(CNN, self).__init__()
         self.n_channel = n_channel
-        self.n_channel2 = n_channel * 2
+        out_channel = 16
         self.SIZE = SIZE
         n_units = int((n_channel + n_out)/2)
 
         with self.init_scope():
             # the size of the inputs to each layer will be inferred
-            self.l1 = L.Convolution2D(None, self.n_channel2, ksize=self.SIZE, pad=0, nobias=True,initialW = initializer)
+            self.l1 = L.Convolution2D(None, 16, ksize=self.SIZE, pad=0, nobias=True,initialW = initializer)
             #self.l1 = L.Linear(None, n_units)  # n_in -> n_units
             self.l2 = L.Linear(None, n_units,initialW = initializer)  # n_in -> n_units
             self.l3 = L.Linear(None, n_out,initialW = initializer)  # n_units -> n_units

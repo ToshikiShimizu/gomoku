@@ -126,7 +126,7 @@ class PolicyGradientPlayer(Player):
         n_out = N**2
         n_size = N
         self.policy_net = CNN(n_channel, n_out, n_size)
-        self.optimizer = optimizers.Adam(alpha=1e-4)#best
+        self.optimizer = optimizers.Adam(alpha=1e-5)#best
         self.optimizer.setup(self.policy_net)
         self.optimizer.add_hook(chainer.optimizer.WeightDecay(1e-4))
         self.history_idx = []
@@ -136,9 +136,10 @@ class PolicyGradientPlayer(Player):
 
     def move(self,board):
         state = board.state
-        x = np.array([state == 1,state == -1]).astype(np.float32)#2チャネルに変換
+        x = np.array([state == self.color,state == -self.color]).astype(np.float32)#自分の石を0チャネル目、相手の石を1チャネル目
         mask = (state==0).astype(np.float32).reshape(1,-1)#合法手マスク
         prob = self.policy_net.predict(x, mask).data.flatten()
+        #print (prob.sum())
         idx = np.random.choice(len(prob),1,p=prob)[0]
         position = [idx//N, idx%N]
         self.history_x.append(x)
@@ -155,6 +156,7 @@ class PolicyGradientPlayer(Player):
         self.history_result = []
 
     def update(self):
+        self.policy_net.cleargrads()
         x = np.array(self.history_x)
         mask = np.array(self.history_mask)
         result = np.array(self.history_result)
@@ -163,7 +165,8 @@ class PolicyGradientPlayer(Player):
         loss = self.policy_net(x, mask, target)
         loss = F.mean(loss*result)
         loss.backward()
-        self.optimizer.update
+        self.optimizer.update()
+
 
 
 
@@ -184,8 +187,8 @@ class HumanPlayer(Player):
     def draw(self):
         print (self.name,"draw")
 if __name__=="__main__":
-    N = 19
-    K = 5
+    N = 3
+    K = 3
     p1 = LegalPlayer("l1")
     #p1 = RandomPlayer("r1")
     #p1 = PolicyGradientPlayer("p1")
@@ -194,7 +197,7 @@ if __name__=="__main__":
     p2 = LegalPlayer("l2")
     #p2 = RandomPlayer("r2")
     #p2 = HumanPlayer("h2")
-    for i in range(10000):
+    for i in range(100000):
         game = Game(p1,p2)
         game.ready()
         game.play()
