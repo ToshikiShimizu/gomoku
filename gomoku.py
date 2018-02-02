@@ -123,9 +123,8 @@ class PolicyGradientPlayer(Player):
     def __init__(self,name):
         super().__init__(name)
         n_channel = 2
-        n_out = N**2
-        n_size = N
-        self.policy_net = CNN(n_channel, n_out, n_size)
+
+        self.policy_net = CNN(n_channel, N , K)
         self.optimizer = optimizers.Adam(alpha=1e-5)#best
         self.optimizer.setup(self.policy_net)
         self.optimizer.add_hook(chainer.optimizer.WeightDecay(1e-4))
@@ -187,11 +186,11 @@ class HumanPlayer(Player):
     def draw(self):
         print (self.name,"draw")
 if __name__=="__main__":
-    N = 3
-    K = 3
-    p1 = LegalPlayer("l1")
+    N = 19
+    K = 5
+    #p1 = LegalPlayer("l1")
     #p1 = RandomPlayer("r1")
-    #p1 = PolicyGradientPlayer("p1")
+    p1 = PolicyGradientPlayer("p1")
 
     #p2 = PolicyGradientPlayer("p2")
     p2 = LegalPlayer("l2")
