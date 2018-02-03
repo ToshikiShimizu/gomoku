@@ -188,12 +188,12 @@ class HumanPlayer(Player):
 if __name__=="__main__":
     N = 19
     K = 5
-    #p1 = LegalPlayer("l1")
+    p1 = LegalPlayer("l1")
     #p1 = RandomPlayer("r1")
-    p1 = PolicyGradientPlayer("p1")
+    #p1 = PolicyGradientPlayer("p1")
 
-    #p2 = PolicyGradientPlayer("p2")
-    p2 = LegalPlayer("l2")
+    p2 = PolicyGradientPlayer("p2")
+    #p2 = LegalPlayer("l2")
     #p2 = RandomPlayer("r2")
     #p2 = HumanPlayer("h2")
     for i in range(100000):
