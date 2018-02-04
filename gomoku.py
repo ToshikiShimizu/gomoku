@@ -231,7 +231,7 @@ if __name__=="__main__":
     K = 5
     N_test = 1000
     eval_freq = 1000
-    show_freq = 1
+    show_freq = 100
     #p1 = LegalPlayer("l1")
     #p1 = RandomPlayer("r1")
     p1 = PolicyGradientPlayer("p1")
@@ -243,16 +243,15 @@ if __name__=="__main__":
     #p2 = RandomPlayer("r2")
     #p2 = UpperLeftPlayer("p2")
     #p2 = HumanPlayer("h2")
-    for i in range(100000):
+    for i in range(1000000):
         game = Game(p1,p2)
         game.ready()
         game.play()
-        print (i)
-        if (i+1 % show_freq) == 0:
+        if (i+1) % show_freq == 0:
             print ("TRAIN")
             p1.show_result()
             p2.show_result()
-        # if (i+1 % eval_freq) == 0:
-        #     #evaluate(p1,p2)
-        #     new_p2 = LegalPlayer("l2")
-        #     evaluate(p1,new_p2)
+        if (i+1) % eval_freq == 0:
+            #evaluate(p1,p2)
+            new_p2 = LegalPlayer("l2")
+            evaluate(p1,new_p2)
