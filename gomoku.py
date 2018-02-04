@@ -7,6 +7,7 @@ from chainer import Variable
 from chainer import optimizers
 from chainer import cuda
 from policy_net import CNN
+import copy
 class Game:
     def __init__(self,p1,p2):
         self.p1 = p1
@@ -22,8 +23,8 @@ class Game:
         self.sub_p = self.main_p
         self.main_p = temp
     def play(self):
-        self.main_p = p1
-        self.sub_p = p2
+        self.main_p = self.p1
+        self.sub_p = self.p2
         for i in range(N*N):
             position = self.main_p.move(self.board)
             if self.is_legal_move(position) == False:
@@ -80,6 +81,8 @@ class Board:
 class Player:
     def __init__(self, name):
         self.name = name
+        self.clear_result()
+    def clear_result(self):
         self.n_win = 0
         self.n_lose = 0
         self.n_draw = 0
@@ -92,7 +95,6 @@ class Player:
         pass
     def win(self):
         self.n_win += 1
-        print (self.name,"win",self.n_win)
         self.end_process(1)
     def lose(self):
         self.n_lose += 1
@@ -100,6 +102,13 @@ class Player:
     def draw(self):
         self.n_draw += 1
         self.end_process(0)
+
+    def show_result(self):
+        print (self.name,"WIN:",self.n_win)
+        print (self.name,"DRAW:",self.n_draw)
+        print (self.name,"LOSE:",self.n_lose)
+        print ()
+
 class RandomPlayer(Player):
     def __init__(self,name):
         super().__init__(name)
@@ -133,7 +142,7 @@ class PolicyGradientPlayer(Player):
     def __init__(self,name):
         super().__init__(name)
         n_channel = 2
-
+        self.train_mode = True
         self.policy_net = CNN(n_channel, N , K)
         self.optimizer = optimizers.Adam(alpha=1e-5)#best
         self.optimizer.setup(self.policy_net)
@@ -145,6 +154,7 @@ class PolicyGradientPlayer(Player):
 
     def move(self,board):
         state = board.state
+
         x = np.array([state == self.color,state == -self.color]).astype(np.float32)#自分の石を0チャネル目、相手の石を1チャネル目
         mask = (state==0).astype(np.float32).reshape(1,-1)#合法手マスク
         prob = self.policy_net.predict(x, mask).data.flatten()
@@ -156,13 +166,16 @@ class PolicyGradientPlayer(Player):
         self.history_idx.append(idx)
 
         return position#座標のリストを返却
-    def end_process(self,result):#historyの初期化
-        self.history_result.extend([result for i in range(len(self.history_x))])
-        self.update()
-        self.history_x = []
-        self.history_idx = []
-        self.history_mask = []
-        self.history_result = []
+    def end_process(self,result):#パラメータ更新、historyの初期化
+        if self.train_mode:
+            self.history_result.extend([result for i in range(len(self.history_x))])
+            self.update()
+            self.history_x = []
+            self.history_idx = []
+            self.history_mask = []
+            self.history_result = []
+        else:
+            pass
 
     def update(self):
         self.policy_net.cleargrads()
@@ -195,20 +208,51 @@ class HumanPlayer(Player):
         print (self.name,"lose")
     def draw(self):
         print (self.name,"draw")
+
+def evaluate(p1,p2):
+    d1 = copy.deepcopy(p1)
+    d2 = copy.deepcopy(p2)
+
+
+    d1.train_mode = False
+    d2.train_mode = False
+    d1.clear_result()
+    d2.clear_result()
+    for i in range(N_test):
+        eval_game = Game(d1,d2)
+        eval_game.ready()
+        eval_game.play()
+    print ("TEST")
+    d1.show_result()
+    d2.show_result()
+
 if __name__=="__main__":
     N = 19
     K = 5
+    N_test = 1000
+    eval_freq = 1000
+    show_freq = 1
     #p1 = LegalPlayer("l1")
     #p1 = RandomPlayer("r1")
-    #p1 = PolicyGradientPlayer("p1")
-    p1 = UpperLeftPlayer("p2")
+    p1 = PolicyGradientPlayer("p1")
+    #p1 = UpperLeftPlayer("p2")
+    #p1.train_mode = False
 
-    #p2 = PolicyGradientPlayer("p2")
+    p2 = PolicyGradientPlayer("p2")
     #p2 = LegalPlayer("l2")
-    p2 = RandomPlayer("r2")
+    #p2 = RandomPlayer("r2")
     #p2 = UpperLeftPlayer("p2")
     #p2 = HumanPlayer("h2")
-    for i in range(10000):
+    for i in range(100000):
         game = Game(p1,p2)
         game.ready()
         game.play()
+        print (i)
+        if (i+1 % show_freq) == 0:
+            print ("TRAIN")
+            p1.show_result()
+            p2.show_result()
+        # if (i+1 % eval_freq) == 0:
+        #     #evaluate(p1,p2)
+        #     new_p2 = LegalPlayer("l2")
+        #     evaluate(p1,new_p2)
