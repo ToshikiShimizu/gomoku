@@ -119,6 +119,16 @@ class LegalPlayer(Player):
         position = [idx//N, idx%N]
         return position#座標のリストを返却
 
+class UpperLeftPlayer(Player):
+    def __init__(self,name):
+        super().__init__(name)
+    def move(self,board):
+        for i in range(board.state.shape[0]):
+            for j in range(board.state.shape[0]):
+                if board.state[i,j] == 0:
+                    position = [i,j]
+                    return position#座標のリストを返却
+
 class PolicyGradientPlayer(Player):
     def __init__(self,name):
         super().__init__(name)
@@ -188,15 +198,17 @@ class HumanPlayer(Player):
 if __name__=="__main__":
     N = 19
     K = 5
-    p1 = LegalPlayer("l1")
+    #p1 = LegalPlayer("l1")
     #p1 = RandomPlayer("r1")
     #p1 = PolicyGradientPlayer("p1")
+    p1 = UpperLeftPlayer("p2")
 
-    p2 = PolicyGradientPlayer("p2")
+    #p2 = PolicyGradientPlayer("p2")
     #p2 = LegalPlayer("l2")
-    #p2 = RandomPlayer("r2")
+    p2 = RandomPlayer("r2")
+    #p2 = UpperLeftPlayer("p2")
     #p2 = HumanPlayer("h2")
-    for i in range(100000):
+    for i in range(10000):
         game = Game(p1,p2)
         game.ready()
         game.play()
