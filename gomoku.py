@@ -156,8 +156,8 @@ class PolicyGradientPlayer(Player):
         state = board.state
 
         x = np.array([state == self.color,state == -self.color]).astype(np.float32)#自分の石を0チャネル目、相手の石を1チャネル目
-        #mask = (state==0).astype(np.float32).reshape(1,-1)#合法手マスク
-        mask = (state != 0)*(1e+8)
+        mask = (state==0).astype(np.float32).reshape(1,-1)#合法手マスク
+        #mask = (state != 0)*(1e+8)
         prob = self.policy_net.predict(x, mask).data.flatten()
         #print (prob)
         #print (prob.sum())

@@ -33,12 +33,14 @@ class CNN(chainer.Chain):
         h1 = F.relu(self.l1(x))
         #print (h1.shape)
         h2 = F.relu(self.l2(h1))
-        o = F.softmax(self.l3(h2)-mask)
-        return F.softmax_cross_entropy(o,t,reduce="no")
-        # r = o * mask
-        # r = r/r.data.sum()
-        #print (h2.shape)
-        #return F.softmax_cross_entropy((self.l3(h2) *  mask)/r.data.sum(),t,reduce="no")
+
+        #o = F.softmax(self.l3(h2)-mask)
+        #return F.softmax_cross_entropy(o,t,reduce="no")
+
+        o = F.softmax(self.l3(h2))
+        r = o * mask
+        r = r/r.data.sum()
+        return F.softmax_cross_entropy((self.l3(h2) *  mask)/r.data.sum(),t,reduce="no")
 
     def predict(self, x, mask):
         x = x.reshape(-1,self.n_channel,self.N,self.N)
@@ -46,8 +48,11 @@ class CNN(chainer.Chain):
 
         h1 = F.relu(self.l1(x))
         h2 = F.relu(self.l2(h1))
-        o = F.softmax(self.l3(h2)-mask)
-        return o
-        # r = o * mask
-        # r = r/r.data.sum()
-        #return r
+
+        # o = F.softmax(self.l3(h2)-mask)
+        # return o
+
+        o = F.softmax(self.l3(h2))
+        r = o * mask
+        r = r/r.data.sum()
+        return r
