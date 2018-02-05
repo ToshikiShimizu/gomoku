@@ -255,5 +255,6 @@ if __name__=="__main__":
             p2.show_result()
         if (i+1) % eval_freq == 0:
             #evaluate(p1,p2)
+            #new_p2 = UpperLeftPlayer("l2")
             new_p2 = LegalPlayer("l2")
             evaluate(p1,new_p2)
