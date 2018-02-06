@@ -246,7 +246,11 @@ if __name__=="__main__":
     #p2 = UpperLeftPlayer("p2")
     #p2 = HumanPlayer("h2")
     for i in range(1000000):
-        game = Game(p1,p2)
+        if i % 2 == 0:
+            game = Game(p1,p2)
+        else:
+            game = Game(p2,p1)
+        p2 = copy.deepcopy(p1)
         game.ready()
         game.play()
         if (i+1) % show_freq == 0:
@@ -255,6 +259,6 @@ if __name__=="__main__":
             p2.show_result()
         if (i+1) % eval_freq == 0:
             #evaluate(p1,p2)
-            #new_p2 = UpperLeftPlayer("l2")
-            new_p2 = LegalPlayer("l2")
+            new_p2 = UpperLeftPlayer("l2")
+            #new_p2 = LegalPlayer("l2")
             evaluate(p1,new_p2)
