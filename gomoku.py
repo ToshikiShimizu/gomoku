@@ -8,6 +8,7 @@ from chainer import optimizers
 from chainer import cuda
 from policy_net import CNN
 import copy
+from sklearn.externals import joblib
 class Game:
     def __init__(self,p1,p2):
         self.p1 = p1
@@ -229,36 +230,58 @@ def evaluate(p1,p2):
     d2.show_result()
 
 if __name__=="__main__":
-    N = 19
-    K = 5
+    N = 5
+    K = 3
     N_test = 1000
     eval_freq = 1000
     show_freq = 100
+    save_freq = 100000
+    LOAD = True
+
+
     #p1 = LegalPlayer("l1")
     #p1 = RandomPlayer("r1")
     p1 = PolicyGradientPlayer("p1")
     #p1 = UpperLeftPlayer("p2")
     #p1.train_mode = False
-
     p2 = PolicyGradientPlayer("p2")
     #p2 = LegalPlayer("l2")
     #p2 = RandomPlayer("r2")
     #p2 = UpperLeftPlayer("p2")
     #p2 = HumanPlayer("h2")
-    for i in range(1000000):
-        if i % 2 == 0:
-            game = Game(p1,p2)
-        else:
-            game = Game(p2,p1)
-        p2 = copy.deepcopy(p1)
+
+    if LOAD:
+        p1 = joblib.load("300000_p1.pkl")
+        p2 = HumanPlayer("h2")
+
+        #p2 = joblib.load("p2.pkl")
+        p1.clear_result()
+        p1.train_mode = False
+        p2.clear_result()
+        p2.train_mode = False
+        game = Game(p1,p2)
         game.ready()
         game.play()
-        if (i+1) % show_freq == 0:
-            print ("TRAIN")
-            p1.show_result()
-            p2.show_result()
-        if (i+1) % eval_freq == 0:
-            #evaluate(p1,p2)
-            new_p2 = UpperLeftPlayer("l2")
-            #new_p2 = LegalPlayer("l2")
-            evaluate(p1,new_p2)
+        p1.show_result()
+        p2.show_result()
+    else:
+        for i in range(1000000):
+            if i % 2 == 0:
+                game = Game(p1,p2)
+            else:
+                game = Game(p2,p1)
+            p2 = copy.deepcopy(p1)
+            game.ready()
+            game.play()
+            if (i+1) % show_freq == 0:
+                print ("TRAIN")
+                p1.show_result()
+                p2.show_result()
+            if (i+1) % eval_freq == 0:
+                #evaluate(p1,p2)
+                #new_p2 = UpperLeftPlayer("l2")
+                new_p2 = LegalPlayer("l2")
+                evaluate(p1,new_p2)
+
+            if (i+1) % save_freq == 0:
+                joblib.dump(p1,str(i+1)+"_p1.pkl")
